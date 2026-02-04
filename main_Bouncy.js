@@ -19,6 +19,10 @@ let fontFamily = "'Permanent Marker', 'Comic Sans MS', cursive";
 let speedX = 280; // pixels per second
 let speedY = 220;
 // ---------------------
+let cornerSpeedBoost = 25; // starting boost
+let minCornerBoost = 5; // min boost (never goes below this)
+let boostDecay = 0.85; // how fast it decays
+let maxSpeed = 1200; // safety cap
 
 // --- Color palette (cycles in order) ---
 const COLORS = [
@@ -68,6 +72,19 @@ function nextColor() {
   color = COLORS[colorIndex];
 }
 
+function boostSpeedOnCorner() {
+	const newVx = Math.min(Math.abs(vx) + cornerSpeedBoost, maxSpeed);
+	const newVy = Math.min(Math.abs(vy) + cornerSpeedBoost, maxSpeed);
+	
+	vx = Math.sign(vx) * newVx;
+	vy = Math.sign(vy) * newVy;
+	
+	cornerSpeedBoost = Math.max(
+	 minCornerBoost,
+	 cornerSpeedBoost * boostDecay
+	);
+}
+
 // Main loop
 function tick(now) {
   const dt = (now - lastTime) / 1000;
@@ -113,8 +130,11 @@ function tick(now) {
   if (hitX || hitY) nextColor();
 
   // Count perfect corner hits
-  if (hitX && hitY) cornerHits++;
-
+  if (hitX && hitY) {
+	cornerHits++;
+	boostSpeedOnCorner();
+  }
+  
   // Draw
   applyMainFont();
   ctx.fillStyle = color;
